@@ -24,7 +24,7 @@ public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Totals, S
          *  super(repository, mapper, d -> mapper.mapBuilder(d,ObjectModel.ObjectModelBuilder.class).build());
          *  Or using mapper.map with the class of the object model
          */
-        super(connectionFactory, mapper, d -> mapper.map(d, Totals.class), "CrediYa_Totals", "totalKey-index");
+        super(connectionFactory, mapper, d -> mapper.map(d, Totals.class), "CrediYa_Totals");
     }
 
     public Mono<List<Totals>> getEntityBySomeKeys(String partitionKey, String sortKey) {
@@ -47,5 +47,10 @@ public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Totals, S
     @Override
     public Mono<Totals> saveTotals(Totals totals) {
         return this.save(totals);
+    }
+
+    @Override
+    public Mono<Totals> getTotalByKey(String totalKey) {
+        return this.getById(totalKey);
     }
 }

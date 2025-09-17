@@ -5,4 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface TotalsRepository {
     Mono<Totals> saveTotals(Totals totals);
+    Mono<Totals> getTotalByKey(String totalKey);
 }
