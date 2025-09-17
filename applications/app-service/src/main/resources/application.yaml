@@ -1,14 +1,15 @@
-##Spring Configuration
 server:
-  port: 8080
+  port: 8082
 spring:
   application:
-    name: CrediYa_Reports
+    name: "CrediYa_Reports"
   devtools:
     add-properties: false
   h2:
     console:
       enabled: true
-      path: /h2
+      path: "/h2"
   profiles:
-    include:
+    active: dev
+aws:
+  region: "us-east-2"
