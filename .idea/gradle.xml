@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/domain/usecase" />
             <option value="$PROJECT_DIR$/infrastructure/driven-adapters/dynamo-db" />
             <option value="$PROJECT_DIR$/infrastructure/entry-points/reactive-web" />
+            <option value="$PROJECT_DIR$/infrastructure/entry-points/sqs-listener" />
             <option value="$PROJECT_DIR$/infrastructure/helpers/metrics" />
           </set>
         </option>

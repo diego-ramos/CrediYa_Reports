@@ -3,10 +3,6 @@ server:
 spring:
   application:
     name: "CrediYa_Reports"
-#  devtools:
-#    add-properties: false
-#    restart:
-#      enabled: false
   h2:
     console:
       enabled: true
@@ -26,3 +22,12 @@ management:
         enabled: true
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+entrypoint:
+  sqs:
+    region: "us-east-2"
+    endpoint: "http://localhost:4566"
+    queueUrl: "https://sqs.us-east-2.amazonaws.com/557649279192/CrediYa_Totals"
+    waitTimeSeconds: 20
+    maxNumberOfMessages: 10
+    visibilityTimeoutSeconds: 10
+    numberOfThreads: 1
