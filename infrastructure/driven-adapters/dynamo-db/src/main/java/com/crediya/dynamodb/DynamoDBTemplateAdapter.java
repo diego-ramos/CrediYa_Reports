@@ -2,7 +2,7 @@ package com.crediya.dynamodb;
 
 import com.crediya.dynamodb.entity.TotalsEntity;
 import com.crediya.dynamodb.helper.TemplateAdapterOperations;
-import com.crediya.model.totals.Totals;
+import com.crediya.model.totals.Total;
 import com.crediya.model.totals.gateways.TotalsRepository;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
@@ -16,7 +16,7 @@ import java.util.List;
 
 
 @Repository
-public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Totals, String, TotalsEntity> implements TotalsRepository {
+public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Total, String, TotalsEntity> implements TotalsRepository {
 
     public DynamoDBTemplateAdapter(DynamoDbEnhancedAsyncClient connectionFactory, ObjectMapper mapper) {
         /**
@@ -24,15 +24,15 @@ public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Totals, S
          *  super(repository, mapper, d -> mapper.mapBuilder(d,ObjectModel.ObjectModelBuilder.class).build());
          *  Or using mapper.map with the class of the object model
          */
-        super(connectionFactory, mapper, d -> mapper.map(d, Totals.class), "CrediYa_Totals");
+        super(connectionFactory, mapper, d -> mapper.map(d, Total.class), "CrediYa_Totals");
     }
 
-    public Mono<List<Totals>> getEntityBySomeKeys(String partitionKey, String sortKey) {
+    public Mono<List<Total>> getEntityBySomeKeys(String partitionKey, String sortKey) {
         QueryEnhancedRequest queryExpression = generateQueryExpression(partitionKey, sortKey);
         return query(queryExpression);
     }
 
-    public Mono<List<Totals>> getEntityBySomeKeysByIndex(String partitionKey, String sortKey) {
+    public Mono<List<Total>> getEntityBySomeKeysByIndex(String partitionKey, String sortKey) {
         QueryEnhancedRequest queryExpression = generateQueryExpression(partitionKey, sortKey);
         return queryByIndex(queryExpression, "secondary_index" /*index is optional if you define in constructor*/);
     }
@@ -45,12 +45,12 @@ public class DynamoDBTemplateAdapter extends TemplateAdapterOperations<Totals, S
     }
 
     @Override
-    public Mono<Totals> saveTotals(Totals totals) {
-        return this.save(totals);
+    public Mono<Total> saveTotals(Total total) {
+        return this.save(total);
     }
 
     @Override
-    public Mono<Totals> getTotalByKey(String totalKey) {
+    public Mono<Total> getTotalByKey(String totalKey) {
         return this.getById(totalKey);
     }
 }

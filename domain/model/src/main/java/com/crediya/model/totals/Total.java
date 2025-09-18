@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class Totals {
+public class Total {
     private String totalKey;
-    private Long totalValue;
+    private String totalValue;
     private LocalDateTime updateDate;
 }

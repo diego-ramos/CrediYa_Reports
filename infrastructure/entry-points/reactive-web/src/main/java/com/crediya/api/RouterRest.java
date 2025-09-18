@@ -1,7 +1,6 @@
 package com.crediya.api;
 
-import com.crediya.model.totals.Totals;
-import com.crediya.model.totals.total;
+import com.crediya.model.totals.Total;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,7 +34,7 @@ public class RouterRest {
                                     @Parameter(name = "totalKey", description = "key to get the data", required = false),
                             },
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Return total successfully", content = @Content(schema = @Schema(implementation = Totals.class))),
+                                    @ApiResponse(responseCode = "200", description = "Return total successfully", content = @Content(schema = @Schema(implementation = Total.class))),
                                     @ApiResponse(responseCode = "400", description = "Error de validación"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
