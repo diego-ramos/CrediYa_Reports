@@ -1,100 +1,139 @@
 package com.crediya.dynamodb.helper;
 
-import com.crediya.dynamodb.DynamoDBTemplateAdapter;
-import com.crediya.dynamodb.ModelEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.reactivecommons.utils.ObjectMapper;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 class TemplateAdapterOperationsTest {
 
-    @Mock
-    private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+    static class DummyEntity {
+        String id;
+        String name;
+    }
 
-    @Mock
+    @DynamoDbBean
+    public static class DummyData {
+        private String id;
+        private String name;
+
+        @DynamoDbPartitionKey
+        public String getId() {
+            return id;
+        }
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    static class DummyTemplateAdapter extends TemplateAdapterOperations<DummyEntity, String, DummyData> {
+        DummyTemplateAdapter(DynamoDbEnhancedAsyncClient client, ObjectMapper mapper) {
+            super(client, mapper, data -> {
+                DummyEntity entity = new DummyEntity();
+                entity.id = data.id;
+                entity.name = data.name;
+                return entity;
+            }, "dummyTable");
+        }
+    }
+
+    private DynamoDbEnhancedAsyncClient client;
+    private DynamoDbAsyncTable<DummyData> table;
     private ObjectMapper mapper;
+    private DummyTemplateAdapter adapter;
 
-    @Mock
-    private DynamoDbAsyncTable<ModelEntity> customerTable;
-
-    private ModelEntity modelEntity;
-
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        client = mock(DynamoDbEnhancedAsyncClient.class);
+        table = mock(DynamoDbAsyncTable.class);
+        mapper = mock(ObjectMapper.class);
 
-        when(dynamoDbEnhancedAsyncClient.table("table_name", TableSchema.fromBean(ModelEntity.class)))
-                .thenReturn(customerTable);
+        when(client.<DummyData>table(eq("dummyTable"), any())).thenReturn(table);
 
-        modelEntity = new ModelEntity();
-        modelEntity.setId("id");
-        modelEntity.setAtr1("atr1");
+
+        adapter = new DummyTemplateAdapter(client, mapper);
     }
 
     @Test
-    void modelEntityPropertiesMustNotBeNull() {
-        ModelEntity modelEntityUnderTest = new ModelEntity("id", "atr1");
+    void getById_shouldCallGetItemAndMapResult() {
+        // Arrange
+        DummyData data = new DummyData();
+        data.id = "123";
+        data.name = "test";
 
-        assertNotNull(modelEntityUnderTest.getId());
-        assertNotNull(modelEntityUnderTest.getAtr1());
-    }
+        when(table.getItem(ArgumentMatchers.<Key>any()))
+                .thenReturn(CompletableFuture.completedFuture(data));
 
-    @Test
-    void testSave() {
-        when(customerTable.putItem(modelEntity)).thenReturn(CompletableFuture.runAsync(()->{}));
-        when(mapper.map(modelEntity, ModelEntity.class)).thenReturn(modelEntity);
+        when(mapper.map(any(), eq(DummyData.class))).thenReturn(data);
 
-        DynamoDBTemplateAdapter dynamoDBTemplateAdapter =
-                new DynamoDBTemplateAdapter(dynamoDbEnhancedAsyncClient, mapper);
+        // Act
+        Mono<DummyEntity> result = adapter.getById("123");
 
-        StepVerifier.create(dynamoDBTemplateAdapter.save(modelEntity))
-                .expectNextCount(1)
+        // Assert
+        StepVerifier.create(result)
+                .expectNextMatches(entity -> entity != null && "test".equals(entity.name))
                 .verifyComplete();
     }
 
     @Test
-    void testGetById() {
-        String id = "id";
+    void save_shouldMapAndCallPutItem() {
+        DummyEntity entity = new DummyEntity();
+        DummyData data = new DummyData();
 
-        when(customerTable.getItem(
-                Key.builder().partitionValue(AttributeValue.builder().s(id).build()).build()))
-                .thenReturn(CompletableFuture.completedFuture(modelEntity));
-        when(mapper.map(modelEntity, Object.class)).thenReturn("value");
+        when(mapper.map(entity, DummyData.class)).thenReturn(data);
+        when(table.putItem(data)).thenReturn(CompletableFuture.completedFuture(null));
 
-        DynamoDBTemplateAdapter dynamoDBTemplateAdapter =
-                new DynamoDBTemplateAdapter(dynamoDbEnhancedAsyncClient, mapper);
+        Mono<DummyEntity> result = adapter.save(entity);
 
-        StepVerifier.create(dynamoDBTemplateAdapter.getById("id"))
-                .expectNext("value")
+        StepVerifier.create(result)
+                .expectNextMatches(e -> e == entity) // use matches to check object identity
                 .verifyComplete();
+
+        verify(table).putItem(data);
     }
 
     @Test
-    void testDelete() {
-        when(mapper.map(modelEntity, ModelEntity.class)).thenReturn(modelEntity);
-        when(mapper.map(modelEntity, Object.class)).thenReturn("value");
+    void delete_shouldCallDeleteItemAndMapResult() {
+        DummyEntity entity = new DummyEntity();
+        DummyData data = new DummyData();
 
-        when(customerTable.deleteItem(modelEntity))
-                .thenReturn(CompletableFuture.completedFuture(modelEntity));
+        when(mapper.map(entity, DummyData.class)).thenReturn(data);
+        when(table.deleteItem(data)).thenReturn(CompletableFuture.completedFuture(data));
 
-        DynamoDBTemplateAdapter dynamoDBTemplateAdapter =
-                new DynamoDBTemplateAdapter(dynamoDbEnhancedAsyncClient, mapper);
+        Mono<DummyEntity> result = adapter.delete(entity);
 
-        StepVerifier.create(dynamoDBTemplateAdapter.delete(modelEntity))
-                .expectNext("value")
+        StepVerifier.create(result)
+                .expectNextMatches(e -> e != null)
                 .verifyComplete();
+
+        verify(table).deleteItem(data);
     }
+
 }

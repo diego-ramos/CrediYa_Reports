@@ -2,6 +2,8 @@ package com.crediya.sqs.listener.helper;
 
 import com.crediya.sqs.listener.SQSProcessor;
 import com.crediya.sqs.listener.config.SQSProperties;
+import com.crediya.usecase.totals.TotalsUseCase;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,6 +21,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SQSListenerTest {
@@ -55,10 +58,13 @@ class SQSListenerTest {
 
     @Test
     void listenerTest() {
+        TotalsUseCase totalsUseCase = mock(TotalsUseCase.class);
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+
         var sqsListener = SQSListener.builder()
                 .client(asyncClient)
                 .properties(sqsProperties)
-                .processor(new SQSProcessor())
+                .processor(new SQSProcessor(totalsUseCase, objectMapper))
                 .operation("operation")
                 .build();
 

@@ -1,100 +1,58 @@
 package com.crediya.api;
 
-import org.assertj.core.api.Assertions;
+import com.crediya.model.totals.Total;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
-@ContextConfiguration(classes = {RouterRest.class, TotalsHandlerV1.class, HandlerV2.class})
-@WebFluxTest
+import java.util.List;
+
+import static org.mockito.Mockito.*;
+
 class RouterRestTest {
 
-    @Autowired
+    private TotalsHandlerV1 totalsHandler;
+    private RouterRest routerRest;
     private WebTestClient webTestClient;
 
-    @Test
-    void testListenGETUseCaseV1() {
-        webTestClient.get()
-                .uri("/api/v1/usecase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
-    @Test
-    void testListenGETUseCaseV2() {
-        webTestClient.get()
-                .uri("/api/v2/usecase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
+    @BeforeEach
+    void setUp() {
+        totalsHandler = mock(TotalsHandlerV1.class);
+        routerRest = new RouterRest();
+
+        RouterFunction<ServerResponse> routerFunction = routerRest.routerFunction(totalsHandler);
+        webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
 
     @Test
-    void testListenGETOtherUseCaseV1() {
-        webTestClient.get()
-                .uri("/api/v1/otherusercase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
-    @Test
-    void testListenGETOtherUseCaseV2() {
-        webTestClient.get()
-                .uri("/api/v2/otherusercase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
+    void getTotals_shouldReturnJsonList() {
+        // Arrange: mock handler to return some totals
+        Total total = new Total();
+        total.setTotalKey("APPROVED");
+        total.setTotalValue("10");
 
-    @Test
-    void testListenPOSTUseCaseV1() {
-        webTestClient.post()
-                .uri("/api/v1/usecase/otherpath")
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue("")
+        when(totalsHandler.getTotals(any()))
+                .thenReturn(ServerResponse.ok().body(Mono.just(List.of(total)), List.class));
+
+        // Act & Assert
+        webTestClient.get()
+                .uri("/api/v1/reportes?totalKey=applications_approved")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
-    @Test
-    void testListenPOSTUseCaseV2() {
-        webTestClient.post()
-                .uri("/api/v2/usecase/otherpath")
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue("")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
+                .expectHeader().contentType("application/json")
+                .expectBodyList(Total.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    List<Total> totals = response.getResponseBody();
+                    assert totals != null;
+                    assert totals.get(0).getTotalKey().equals("APPROVED");
+                    assert totals.get(0).getTotalValue().equals("10");
+                });
+
+        // Verify handler called
+        verify(totalsHandler).getTotals(any());
     }
 }

@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 public class TotalsEntity {
 
     private String totalKey;
-    private float totalValue;
+    private String totalValue;
     private LocalDateTime updateDate;
 
     public TotalsEntity() {
     }
 
-    public TotalsEntity(String totalKey, float totalValue, LocalDateTime updateDate) {
+    public TotalsEntity(String totalKey, String totalValue, LocalDateTime updateDate) {
         this.totalKey = totalKey;
         this.totalValue = totalValue;
         this.updateDate = updateDate;
@@ -33,11 +33,11 @@ public class TotalsEntity {
     }
 
     @DynamoDbAttribute("totalValue")
-    public float getTotalValue() {
+    public String getTotalValue() {
         return totalValue;
     }
 
-    public void setTotalValue(float totalValue) {
+    public void setTotalValue(String totalValue) {
         this.totalValue = totalValue;
     }
 
