@@ -9,6 +9,11 @@ spring:
       path: "/h2"
   profiles:
     active: "dev"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret: "my-super-secret-key-change-me-123456"
 aws:
   region: "us-east-2"
 management:
