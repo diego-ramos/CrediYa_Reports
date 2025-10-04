@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
@@ -11,6 +12,10 @@
             <option value="$PROJECT_DIR$/applications/app-service" />
             <option value="$PROJECT_DIR$/domain/model" />
             <option value="$PROJECT_DIR$/domain/usecase" />
+            <option value="$PROJECT_DIR$/infrastructure/driven-adapters/dynamo-db" />
+            <option value="$PROJECT_DIR$/infrastructure/entry-points/reactive-web" />
+            <option value="$PROJECT_DIR$/infrastructure/entry-points/sqs-listener" />
+            <option value="$PROJECT_DIR$/infrastructure/helpers/metrics" />
           </set>
         </option>
       </GradleProjectSettings>
